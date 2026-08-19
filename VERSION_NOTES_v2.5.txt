@@ -1,0 +1,10 @@
+AquaSurvey Pro v2.5 – Final field interface
+
+Changes:
+- Removed small fish icon from main header.
+- Retained ICAR institutional logo in header.
+- Replaced four watermark styles with one standard scientific watermark.
+- Developer names are excluded from photo watermarks and survey records/CSV exports.
+- Added compact Survey Information panel to Camera & GPS.
+- Retained AquaSurvey Pro 192x192 and 512x512 app icons.
+- Bumped service-worker cache to v5.

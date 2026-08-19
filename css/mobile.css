@@ -1,0 +1,585 @@
+/* ========================================================================
+   AquaSurvey Pro - Mobile Responsive Layer
+   Version 2.1
+   Keeps the desktop design intact and adapts the field UI for Android phones.
+   ======================================================================== */
+
+/* Prevent mobile browser width calculations from creating horizontal drift. */
+html, body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+@media (max-width: 768px) {
+  :root {
+    --mobile-gutter: 0.75rem;
+    --mobile-bottom-nav: 5.7rem;
+  }
+
+  body {
+    font-size: 14px;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .app-container {
+    width: 100%;
+    max-width: 100%;
+    padding: 0 var(--mobile-gutter) var(--mobile-bottom-nav) var(--mobile-gutter);
+  }
+
+  /* Compact phone header */
+  .app-header {
+    position: relative;
+    width: 100%;
+    padding: 0.65rem 0.05rem 0.7rem;
+    margin-bottom: 0.75rem;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .brand-area {
+    min-width: 0;
+    flex: 1 1 auto;
+    gap: 0.45rem;
+  }
+
+  .icar-header-logo-frame {
+    width: 34px !important;
+    height: 34px !important;
+    flex: 0 0 34px;
+  }
+
+
+  .brand-titles {
+    min-width: 0;
+  }
+
+  .brand-titles h1 {
+    font-size: 1.05rem;
+    gap: 0.25rem;
+    white-space: nowrap;
+  }
+
+  .brand-tagline {
+    display: block;
+    max-width: 205px;
+    font-size: 0.62rem;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .header-actions {
+    flex: 0 0 auto;
+    gap: 0.25rem;
+  }
+
+  .header-actions .status-pill {
+    width: 31px;
+    height: 31px;
+    padding: 0;
+    justify-content: center;
+    gap: 0;
+    font-size: 0;
+    border-radius: 50%;
+  }
+
+  .header-actions .status-pill .dot {
+    width: 9px;
+    height: 9px;
+  }
+
+  .header-actions .btn-secondary:not(#openSettingsBtn):not(#openAboutBtn) {
+    display: none;
+  }
+
+  #openAboutBtn,
+  #openSettingsBtn {
+    width: 31px;
+    height: 31px;
+    min-width: 31px;
+    padding: 0;
+    font-size: 0;
+    border-radius: 50%;
+  }
+
+  #openAboutBtn::before { content: 'ℹ️'; font-size: 0.85rem; }
+  #openSettingsBtn::before { content: '⚙️'; font-size: 0.85rem; }
+
+  #themeToggleBtn {
+    width: 31px;
+    height: 31px;
+    min-width: 31px;
+    padding: 0;
+    font-size: 0.85rem;
+  }
+
+  /* Bottom app navigation: thumb friendly and safe-area aware */
+  .tab-navigation {
+    position: fixed;
+    left: max(0.5rem, env(safe-area-inset-left));
+    right: max(0.5rem, env(safe-area-inset-right));
+    bottom: max(0.5rem, env(safe-area-inset-bottom));
+    width: auto;
+    z-index: 1000;
+    margin: 0;
+    padding: 0.3rem;
+    gap: 0.2rem;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.7);
+  }
+
+  .nav-tab-btn {
+    min-width: 0;
+    min-height: 52px;
+    padding: 0.35rem 0.15rem;
+    gap: 0.12rem;
+    font-size: 0.63rem;
+    line-height: 1.05;
+    white-space: nowrap;
+  }
+
+  .nav-tab-btn .tab-icon {
+    font-size: 1.18rem;
+    line-height: 1;
+  }
+
+  .nav-tab-btn .tab-badge {
+    top: 3px;
+    right: 9px;
+    font-size: 0.55rem;
+    min-width: 14px;
+    height: 14px;
+  }
+
+  /* Content panels/cards */
+  .tab-content-panel {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .glass-card {
+    width: 100%;
+    min-width: 0;
+    padding: 0.9rem;
+    border-radius: 16px;
+  }
+
+  .card-title {
+    font-size: 1rem;
+  }
+
+  .card-subtitle {
+    font-size: 0.7rem;
+    line-height: 1.3;
+  }
+
+  /* Camera */
+  .camera-workspace {
+    width: 100%;
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
+  }
+
+  .viewfinder-section,
+  .geotag-meta-card {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .viewfinder-card {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    border-radius: 15px;
+  }
+
+  .camera-reticle {
+    width: 62px;
+    height: 62px;
+  }
+
+  .camera-reticle::before {
+    width: 9px;
+    height: 9px;
+  }
+
+  .viewfinder-hud-top {
+    top: 0.45rem;
+    left: 0.45rem;
+    right: 0.45rem;
+    gap: 0.35rem;
+  }
+
+  .viewfinder-hud-top .hud-badge {
+    padding: 0.28rem 0.42rem;
+    font-size: 0.58rem;
+  }
+
+  .viewfinder-hud-bottom {
+    left: 0.45rem;
+    right: 0.45rem;
+    bottom: 0.45rem;
+  }
+
+  .hud-geo-line,
+  .hud-water-line {
+    font-size: 0.58rem;
+    line-height: 1.25;
+  }
+
+  .camera-controls-bar {
+    width: 100%;
+    padding: 0.55rem 0;
+    gap: 0.45rem;
+  }
+
+  .camera-controls-bar .btn {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 44px;
+    padding: 0.55rem 0.35rem;
+    font-size: 0.72rem;
+  }
+
+  .shutter-btn-wrapper {
+    flex: 0 0 68px;
+  }
+
+  .shutter-btn {
+    width: 62px;
+    height: 62px;
+  }
+
+  .gps-info-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .gps-stat-box {
+    min-width: 0;
+    padding: 0.55rem 0.6rem;
+  }
+
+  .gps-stat-label {
+    font-size: 0.6rem;
+  }
+
+  .gps-stat-value {
+    font-size: 0.72rem;
+    overflow-wrap: anywhere;
+  }
+
+
+  .wm-style-option {
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.45rem 0.3rem;
+    font-size: 0.68rem;
+  }
+
+  /* Parameters */
+  .parameters-grid {
+    width: 100%;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .param-card {
+    width: 100%;
+    min-width: 0;
+    padding: 0.85rem;
+    gap: 0.75rem;
+    border-radius: 16px;
+  }
+
+  .param-header {
+    gap: 0.5rem;
+  }
+
+  .param-title-wrap {
+    min-width: 0;
+  }
+
+  .param-icon-badge {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+  }
+
+  .param-name {
+    font-size: 0.88rem;
+  }
+
+  .param-unit {
+    font-size: 0.64rem;
+    line-height: 1.25;
+  }
+
+  .param-value-container {
+    min-height: 52px;
+    padding: 0.5rem 0.65rem;
+  }
+
+  .param-stepper-btn {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    font-size: 0.95rem;
+  }
+
+  .param-current-value {
+    font-size: 1.35rem;
+  }
+
+  .custom-range-slider {
+    height: 12px;
+  }
+
+  .custom-range-slider::-webkit-slider-thumb {
+    width: 28px;
+    height: 28px;
+  }
+
+  .custom-range-slider::-moz-range-thumb {
+    width: 28px;
+    height: 28px;
+  }
+
+  .slider-ticks-labels {
+    gap: 0.25rem;
+    font-size: 0.58rem;
+  }
+
+  .preset-chips-list {
+    gap: 0.35rem;
+  }
+
+  .preset-chip {
+    min-height: 34px;
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.65rem;
+    padding: 0.35rem 0.55rem;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .form-input,
+  .form-select,
+  .form-textarea {
+    width: 100%;
+    min-height: 44px;
+    font-size: 16px; /* prevents iOS/Android browser zoom behaviour on form focus */
+  }
+
+  .form-textarea {
+    min-height: 100px;
+  }
+
+  /* Inline two-column action groups in the existing HTML become stacked only when needed. */
+  .glass-card > div[style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Records */
+  .records-toolbar {
+    width: 100%;
+    padding: 0.75rem;
+    gap: 0.65rem;
+  }
+
+  .search-filter-group {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .search-input {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  .export-btn-group {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.4rem;
+  }
+
+  .export-btn-group .btn {
+    min-width: 0;
+    min-height: 42px;
+    padding: 0.4rem 0.2rem;
+    font-size: 0.65rem;
+  }
+
+  .records-grid {
+    width: 100%;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .record-card {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .record-params-summary {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .record-actions {
+    flex-wrap: wrap;
+    gap: 0.45rem;
+  }
+
+  .record-actions .btn {
+    min-height: 42px;
+  }
+
+  /* Map */
+  .map-workspace-card {
+    width: 100%;
+    height: calc(100vh - 190px);
+    min-height: 430px;
+    max-height: 650px;
+    border-radius: 16px;
+  }
+
+  .leaflet-control-zoom a {
+    width: 40px !important;
+    height: 40px !important;
+    line-height: 40px !important;
+    font-size: 1.2rem !important;
+  }
+
+  .map-popup-card {
+    min-width: 0;
+    max-width: 230px;
+  }
+
+  /* Modal/dialogs */
+  .modal-backdrop {
+    padding: 0.6rem;
+    align-items: flex-end;
+  }
+
+  .modal-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: calc(100vh - 1.2rem);
+    padding: 1rem;
+    border-radius: 18px 18px 12px 12px;
+  }
+
+  .modal-header h3 {
+    font-size: 1rem;
+  }
+
+  .ph-popup-modal-content {
+    gap: 1rem;
+  }
+
+  .ph-gauge-big {
+    width: 145px;
+    height: 145px;
+  }
+
+  .ph-big-number {
+    font-size: 2.5rem;
+  }
+
+  .preview-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .preview-actions .btn {
+    width: 100%;
+    min-height: 46px;
+  }
+
+  /* Toasts clear the bottom navigation. */
+  .toast-container {
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: 6.1rem;
+  }
+}
+
+/* Very small Android phones (320–360 px). */
+@media (max-width: 380px) {
+  .app-container {
+    padding-left: 0.55rem;
+    padding-right: 0.55rem;
+  }
+
+  .brand-tagline {
+    max-width: 145px;
+  }
+
+
+  .icar-header-logo-frame {
+    width: 31px !important;
+    height: 31px !important;
+    flex-basis: 31px;
+  }
+
+  .nav-tab-btn {
+    font-size: 0.56rem;
+  }
+
+  .nav-tab-btn .tab-icon {
+    font-size: 1.05rem;
+  }
+
+  .gps-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .export-btn-group {
+    grid-template-columns: 1fr;
+  }
+
+  .record-params-summary {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+/* Landscape phones: keep the bottom navigation usable without forcing desktop width. */
+@media (max-width: 900px) and (orientation: landscape) {
+  .app-container {
+    padding-bottom: 4.6rem;
+  }
+
+  .tab-navigation {
+    left: 1rem;
+    right: 1rem;
+    bottom: 0.35rem;
+  }
+
+  .nav-tab-btn {
+    min-height: 44px;
+    flex-direction: row;
+    gap: 0.25rem;
+    font-size: 0.68rem;
+  }
+
+  .camera-workspace {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    align-items: start;
+  }
+
+  .viewfinder-card {
+    max-height: calc(100vh - 130px);
+  }
+}

@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AquaSurvey Pro | Fishery Survey & Geotagged Water Quality Suite</title>
+  <meta name="description" content="Professional fishery survey and water quality field application with real-time camera geotag watermarking, interactive pH range dials, DO, salinity, and offline GIS mapping.">
+
+  <!-- Android / PWA Mobile Configuration -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0088ff">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" type="image/png" href="assets/icon-192.png">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
+
+  <!-- Leaflet CSS for GIS Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+
+  <!-- Application Stylesheets -->
+  <link rel="stylesheet" href="css/index.css">
+  <link rel="stylesheet" href="css/camera.css">
+  <link rel="stylesheet" href="css/parameters.css">
+  <link rel="stylesheet" href="css/map-records.css">
+  <link rel="stylesheet" href="css/mobile.css">
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="brand-area">
+        <div class="icar-header-logo-frame" title="ICAR Official Emblem">
+          <img src="assets/icar_logo.png" alt="ICAR Logo" class="icar-logo-img">
+        </div>
+        <div class="brand-titles">
+          <h1>AquaSurvey <span>Pro</span></h1>
+          <div class="brand-tagline" id="headerBrandSubtitle">
+            <span style="color:var(--accent-cyan); font-weight:600;">ICAR Research Complex for NEH Region</span> • Fishery Survey Suite
+          </div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="status-pill" id="gpsStatusPill">
+          <span class="dot"></span> GPS ACQUIRING
+        </div>
+        <button class="btn btn-secondary btn-sm" id="openAboutBtn" title="About Developers & ICAR Acknowledgements" aria-label="About Developers">
+          ℹ️ About & Credits
+        </button>
+        <button class="btn btn-secondary btn-sm" id="openSettingsBtn" title="Organization & Survey Settings" aria-label="Settings">
+          ⚙️ Profile / Institute
+        </button>
+        <button class="btn btn-icon" id="themeToggleBtn" title="Toggle Theme" aria-label="Toggle Theme">🌙</button>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="tab-navigation" aria-label="Main Navigation">
+      <button class="nav-tab-btn active" data-tab="capture" id="navTabCapture">
+        <span class="tab-icon">📷</span>
+        <span>Camera & GPS</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="parameters" id="navTabParams">
+        <span class="tab-icon">🧪</span>
+        <span>Water Params</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="records" id="navTabRecords">
+        <span class="tab-icon">📋</span>
+        <span>Records</span>
+        <span class="tab-badge" id="recordsCountBadge">0</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="map" id="navTabMap">
+        <span class="tab-icon">🗺️</span>
+        <span>Field Map</span>
+      </button>
+    </nav>
+
+    <!-- =========================================================================
+         TAB 1: CAMERA & GEOTAG WATERMARK STUDIO
+         ========================================================================= -->
+    <main class="tab-content-panel active" id="tab-capture">
+      <div class="camera-workspace">
+        
+        <!-- Left: Live Viewfinder & Capture Controls -->
+        <div class="viewfinder-section">
+          <div class="viewfinder-card">
+            <video id="viewfinderVideo" class="viewfinder-video" autoplay playsinline muted></video>
+            
+            <!-- Grid Lines & Reticle Overlay -->
+            <div class="camera-grid-lines">
+              <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
+              <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
+              <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
+            </div>
+            <div class="camera-reticle"></div>
+
+            <!-- Top HUD Overlay -->
+            <div class="viewfinder-hud-top">
+              <div class="hud-badge gps-lock">
+                <span>📍</span> <span id="viewfinderCoordsHud">12.9716° N, 77.5946° E</span>
+              </div>
+              <div class="hud-badge">
+                <span>🕒</span> <span id="viewfinderTimeHud">--:--:--</span>
+              </div>
+            </div>
+
+            <!-- Bottom Live Watermark Preview on Viewfinder -->
+            <div class="viewfinder-hud-bottom">
+              <div class="hud-geo-line">
+                <span class="hud-coords">AQUASURVEY LIVE HUD</span>
+                <span class="hud-time">Field Telemetry Active</span>
+              </div>
+              <div class="hud-water-line" id="viewfinderWaterHud">
+                💧 pH: <b>7.5</b> | 🌡️ <b>26.5°C</b> | 🫁 DO: <b>6.8mg/L</b> | 🧂 <b>0.5ppt</b>
+              </div>
+            </div>
+
+            <!-- Flash Animation Overlay -->
+            <div class="shutter-flash" id="shutterFlash"></div>
+          </div>
+
+          <!-- Bottom Camera Action Toolbar -->
+          <div class="camera-controls-bar">
+            <button class="btn btn-secondary btn-sm" id="uploadPhotoBtn" title="Upload Photo from Device">
+              📁 Choose Photo
+            </button>
+            <input type="file" id="photoFileInput" accept="image/*" style="display: none;">
+
+            <div class="shutter-btn-wrapper">
+              <button class="shutter-btn" id="shutterBtn" title="Take Geotagged Photo" aria-label="Take Photo">
+                📸
+              </button>
+            </div>
+
+            <button class="btn btn-secondary btn-sm" id="switchCameraBtn" title="Switch Front/Rear Camera">
+              🔄 Switch Cam
+            </button>
+          </div>
+        </div>
+
+        <!-- Right: Geotag Telemetry & Watermark Options -->
+        <div class="geotag-meta-card">
+          <div class="glass-card">
+            <div class="card-header">
+              <div>
+                <h2 class="card-title">📍 GPS Geotag Telemetry</h2>
+                <div class="card-subtitle">Live real-time coordinates burned on capture</div>
+              </div>
+            </div>
+
+            <div class="gps-info-grid">
+              <div class="gps-stat-box">
+                <div class="gps-stat-label">Latitude</div>
+                <div class="gps-stat-value highlight" id="metaLatVal">12.971598° N</div>
+              </div>
+              <div class="gps-stat-box">
+                <div class="gps-stat-label">Longitude</div>
+                <div class="gps-stat-value highlight" id="metaLngVal">77.594562° E</div>
+              </div>
+              <div class="gps-stat-box">
+                <div class="gps-stat-label">Altitude</div>
+                <div class="gps-stat-value" id="metaAltVal">920.0 m</div>
+              </div>
+              <div class="gps-stat-box">
+                <div class="gps-stat-label">GPS Accuracy</div>
+                <div class="gps-stat-value" id="metaAccVal">±3.5 m</div>
+              </div>
+            </div>
+
+            <!-- Survey Information -->
+            <div class="survey-info-section">
+              <div class="survey-info-heading">Survey Information</div>
+              <div class="survey-info-grid">
+                <div class="survey-info-box">
+                  <div class="survey-info-label">Station / Location</div>
+                  <div class="survey-info-value" id="metaStationVal">Field Station</div>
+                </div>
+                <div class="survey-info-box">
+                  <div class="survey-info-label">Date & Time</div>
+                  <div class="survey-info-value" id="metaDateVal">--</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Jump to Water Quality Parameters & pH -->
+            <div style="margin-top: 1.25rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem;">
+              <button class="btn btn-secondary" onclick="window.app.switchTab('parameters')">
+                🧪 Fill Parameters
+              </button>
+              <button class="btn btn-primary" id="openPhPopupBtn">
+                💧 Fine-Tune pH (4.0-9.0)
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- =========================================================================
+         TAB 2: WATER QUALITY PARAMETERS & FISHERY LOG
+         ========================================================================= -->
+    <section class="tab-content-panel" id="tab-parameters">
+      
+      <!-- Station Information Form -->
+      <div class="glass-card" style="margin-bottom: 1.5rem;">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">🏷️ Survey Station & Waterbody Metadata</h2>
+            <div class="card-subtitle">Specify station identification and habitat classification</div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="stationIdInput">Station / Site ID:</label>
+            <input type="text" id="stationIdInput" class="form-input" value="SURVEY-STN-01" placeholder="e.g. POND-NORTH-01">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="waterBodySelect">Water Body Type:</label>
+            <select id="waterBodySelect" class="form-select">
+              <option value="Aquaculture Earthen Pond" selected>Aquaculture Earthen Pond</option>
+              <option value="Concrete Nursery Tank">Concrete Nursery Tank</option>
+              <option value="Freshwater Lake / Reservoir">Freshwater Lake / Reservoir</option>
+              <option value="River / Stream Channel">River / Stream Channel</option>
+              <option value="Estuary / Mangrove Creek">Estuary / Mangrove Creek</option>
+              <option value="Marine Fish Cage">Marine Fish Cage</option>
+              <option value="Hatchery Recirculating System (RAS)">Hatchery Recirculating System (RAS)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="surveyorInput">Surveyor Name / ID:</label>
+            <input type="text" id="surveyorInput" class="form-input" value="Lead Field Officer" placeholder="e.g. Dr. John Doe">
+          </div>
+        </div>
+      </div>
+
+      <!-- Water Quality Parameter Sliders -->
+      <div class="parameters-grid">
+        
+        <!-- FEATURED: pH Parameter Card (Range 4.0 - 9.0, 0.1 increment) -->
+        <div class="param-card featured-ph">
+          <div class="param-header">
+            <div class="param-title-wrap">
+              <div class="param-icon-badge">💧</div>
+              <div>
+                <div class="param-name">Water pH Level</div>
+                <div class="param-unit">Range: 4.0 - 9.0 | Step: 0.1</div>
+              </div>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="window.app.openModal('phPopupModal')">
+              🔍 Popup Dial
+            </button>
+          </div>
+
+          <!-- Stepper Value & Display -->
+          <div class="param-value-container">
+            <button class="param-stepper-btn" id="phMinusBtn" title="Decrease pH by 0.1">-0.1</button>
+            <div class="param-current-value">
+              <span id="phDisplayVal">7.5</span>
+              <span class="unit-small">pH</span>
+            </div>
+            <button class="param-stepper-btn" id="phPlusBtn" title="Increase pH by 0.1">+0.1</button>
+          </div>
+
+          <!-- 4.0 to 9.0 Slider with 0.1 step -->
+          <div class="param-slider-wrapper">
+            <input type="range" id="phSlider" class="custom-range-slider" min="4.0" max="9.0" step="0.1" value="7.5">
+            <div class="ph-spectrum-bar">
+              <div class="ph-spectrum-marker" id="phSpectrumMarker"></div>
+            </div>
+            <div class="slider-ticks-labels">
+              <span>4.0 (Acidic)</span>
+              <span>6.5</span>
+              <span>7.0 (Neutral)</span>
+              <span>7.5</span>
+              <span>9.0 (Alkaline)</span>
+            </div>
+          </div>
+
+          <!-- Quick Presets -->
+          <div class="preset-chips-list">
+            <span class="preset-chip" data-ph-preset="5.5">5.5 (Acidic Risk)</span>
+            <span class="preset-chip" data-ph-preset="7.0">7.0 (Neutral)</span>
+            <span class="preset-chip active-preset" data-ph-preset="7.5">7.5 (Freshwater Optimal)</span>
+            <span class="preset-chip" data-ph-preset="8.2">8.2 (Marine/Shrimp)</span>
+            <span class="preset-chip" data-ph-preset="8.8">8.8 (Alkaline Alert)</span>
+          </div>
+
+          <!-- Real-time Ecological Assessment -->
+          <div class="eco-status-box status-optimal" id="phEcoStatusBox">
+            <strong>✨ Optimal Fishery Range</strong>: High growth rate and ideal phytoplankton balance.
+          </div>
+        </div>
+
+        <!-- Dissolved Oxygen (DO) Card -->
+        <div class="param-card">
+          <div class="param-header">
+            <div class="param-title-wrap">
+              <div class="param-icon-badge">🫁</div>
+              <div>
+                <div class="param-name">Dissolved Oxygen (DO)</div>
+                <div class="param-unit">Range: 0.0 - 20.0 mg/L | Step: 0.1</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="param-value-container">
+            <button class="param-stepper-btn" id="doMinusBtn">-0.2</button>
+            <div class="param-current-value">
+              <span id="doDisplayVal">6.8</span>
+              <span class="unit-small">mg/L</span>
+            </div>
+            <button class="param-stepper-btn" id="doPlusBtn">+0.2</button>
+          </div>
+
+          <div class="param-slider-wrapper">
+            <input type="range" id="doSlider" class="custom-range-slider" min="0.0" max="20.0" step="0.1" value="6.8">
+            <div class="slider-ticks-labels">
+              <span>0.0 (Anoxic)</span>
+              <span>3.0 (Hypoxic)</span>
+              <span>5.0 (Optimal)</span>
+              <span>20.0 mg/L</span>
+            </div>
+          </div>
+
+          <div class="eco-status-box status-optimal" id="doEcoStatusBox">
+            <strong>✨ Optimal Oxygenation</strong>: Healthy respiration for aquaculture species.
+          </div>
+        </div>
+
+        <!-- Water Temperature Card -->
+        <div class="param-card">
+          <div class="param-header">
+            <div class="param-title-wrap">
+              <div class="param-icon-badge">🌡️</div>
+              <div>
+                <div class="param-name">Water Temperature</div>
+                <div class="param-unit">Range: 0.0 - 45.0 °C | Step: 0.1</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="param-value-container">
+            <button class="param-stepper-btn" id="tempMinusBtn">-0.5</button>
+            <div class="param-current-value">
+              <span id="tempDisplayVal">26.5</span>
+              <span class="unit-small">°C</span>
+            </div>
+            <button class="param-stepper-btn" id="tempPlusBtn">+0.5</button>
+          </div>
+
+          <div class="param-slider-wrapper">
+            <input type="range" id="tempSlider" class="custom-range-slider" min="0.0" max="45.0" step="0.1" value="26.5">
+            <div class="slider-ticks-labels">
+              <span>0.0 °C</span>
+              <span>18.0 °C (Coldwater)</span>
+              <span>28.0 °C (Tropical)</span>
+              <span>45.0 °C</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Salinity Card -->
+        <div class="param-card">
+          <div class="param-header">
+            <div class="param-title-wrap">
+              <div class="param-icon-badge">🧂</div>
+              <div>
+                <div class="param-name">Salinity</div>
+                <div class="param-unit">Range: 0.0 - 50.0 ppt | Step: 0.1</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="param-value-container">
+            <button class="param-stepper-btn" id="salMinusBtn">-0.5</button>
+            <div class="param-current-value">
+              <span id="salinityDisplayVal">0.5</span>
+              <span class="unit-small">ppt</span>
+            </div>
+            <button class="param-stepper-btn" id="salPlusBtn">+0.5</button>
+          </div>
+
+          <div class="param-slider-wrapper">
+            <input type="range" id="salinitySlider" class="custom-range-slider" min="0.0" max="50.0" step="0.1" value="0.5">
+            <div class="slider-ticks-labels">
+              <span>0 (Fresh)</span>
+              <span>15 (Brackish)</span>
+              <span>35 (Marine)</span>
+              <span>50 ppt</span>
+            </div>
+          </div>
+
+          <div style="font-size: 0.78rem; color: var(--accent-cyan); font-weight: 600;" id="salinityClassBadge">
+            Freshwater (&lt;0.5 ppt)
+          </div>
+        </div>
+
+        <!-- Total Ammonia Card -->
+        <div class="param-card">
+          <div class="param-header">
+            <div class="param-title-wrap">
+              <div class="param-icon-badge">☣️</div>
+              <div>
+                <div class="param-name">Total Ammonia ($NH_3$)</div>
+                <div class="param-unit">Range: 0.00 - 5.00 mg/L | Step: 0.01</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="param-value-container">
+            <div class="param-current-value">
+              <span id="ammoniaDisplayVal">0.05</span>
+              <span class="unit-small">mg/L</span>
+            </div>
+          </div>
+
+          <div class="param-slider-wrapper">
+            <input type="range" id="ammoniaSlider" class="custom-range-slider" min="0.00" max="5.00" step="0.01" value="0.05">
+            <div class="slider-ticks-labels">
+              <span>0.00 (Safe)</span>
+              <span>0.20 (Caution)</span>
+              <span>0.50 (Toxic)</span>
+              <span>5.00 mg/L</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Turbidity / Secchi Depth Card -->
+        <div class="param-card">
+          <div class="param-header">
+            <div class="param-title-wrap">
+              <div class="param-icon-badge">👁️</div>
+              <div>
+                <div class="param-name">Secchi Depth (Transparency)</div>
+                <div class="param-unit">Range: 0 - 200 cm | Step: 1 cm</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="param-value-container">
+            <div class="param-current-value">
+              <span id="secchiDisplayVal">45</span>
+              <span class="unit-small">cm</span>
+            </div>
+          </div>
+
+          <div class="param-slider-wrapper">
+            <input type="range" id="secchiSlider" class="custom-range-slider" min="0" max="200" step="1" value="45">
+            <div class="slider-ticks-labels">
+              <span>0 cm (Turbid)</span>
+              <span>30 - 45 cm (Ideal Bloom)</span>
+              <span>200 cm (Clear)</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Biological Observations Form -->
+      <div class="glass-card" style="margin-top: 1.5rem;">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">🐟 Fish Stock & Ecological Observations</h2>
+            <div class="card-subtitle">Record species identified, estimated biomass, and health indicators</div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="speciesInput">Observed / Sampled Species:</label>
+            <input type="text" id="speciesInput" class="form-input" value="Oreochromis niloticus (Nile Tilapia)">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="fishCountInput">Estimated Count / Catch:</label>
+            <input type="number" id="fishCountInput" class="form-input" value="150" min="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="fishHealthSelect">Fish Condition / Behavior:</label>
+            <select id="fishHealthSelect" class="form-select">
+              <option value="Healthy / Active Feeding" selected>Healthy / Active Feeding</option>
+              <option value="Surface Gasping (Oxygen Stress)">Surface Gasping (Oxygen Stress)</option>
+              <option value="Lethargic / Slow Swimming">Lethargic / Slow Swimming</option>
+              <option value="Gill Discoloration / Lesions">Gill Discoloration / Lesions</option>
+              <option value="Post-Stocking Acclimation">Post-Stocking Acclimation</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="surveyNotesInput">Surveyor Notes & Environmental Remarks:</label>
+          <textarea id="surveyNotesInput" class="form-textarea" placeholder="Enter weather condition, algae blooms, predator activity, or water treatments applied...">Water clear with greenish hue. Normal surface activity.</textarea>
+        </div>
+
+        <div style="margin-top: 1.25rem; display: flex; justify-content: flex-end; gap: 0.75rem;">
+          <button class="btn btn-primary btn-lg" onclick="window.app.switchTab('capture')">
+            📷 Proceed to Photo Capture & Stamp
+          </button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- =========================================================================
+         TAB 3: SURVEY RECORDS LOG & EXPORT
+         ========================================================================= -->
+    <section class="tab-content-panel" id="tab-records">
+      <div class="records-container">
+        
+        <div class="records-toolbar">
+          <div class="search-filter-group">
+            <input type="text" id="recordsSearchInput" class="search-input" placeholder="🔍 Search by station, institute, species, waterbody...">
+          </div>
+          <div class="export-btn-group">
+            <button class="btn btn-secondary btn-sm" id="exportCsvBtn">
+              📊 Export CSV
+            </button>
+            <button class="btn btn-secondary btn-sm" id="exportJsonBtn">
+              💾 Export JSON
+            </button>
+            <button class="btn btn-secondary btn-sm" id="printReportBtn">
+              🖨️ Print Report
+            </button>
+          </div>
+        </div>
+
+        <!-- Records Grid -->
+        <div class="records-grid" id="recordsGrid">
+          <!-- Populated dynamically by app.js -->
+        </div>
+
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         TAB 4: INTERACTIVE FIELD MAP (LEAFLET GIS)
+         ========================================================================= -->
+    <section class="tab-content-panel" id="tab-map">
+      <div class="glass-card" style="margin-bottom: 1rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+        <div>
+          <h2 class="card-title">🗺️ Geographic Survey Stations</h2>
+          <div class="card-subtitle">Pins color-coded by water quality index: 🟢 Optimal | 🟡 Caution | 🔴 Critical</div>
+        </div>
+        <button class="btn btn-primary btn-sm" id="centerGpsBtn">
+          📍 Center on Current GPS
+        </button>
+      </div>
+
+      <div class="map-workspace-card">
+        <div id="fisherySurveyMap"></div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- =========================================================================
+       MODAL 1: INTERACTIVE pH POPUP RANGE PICKER (4.0 - 9.0 with 0.1 step)
+       ========================================================================= -->
+  <div class="modal-backdrop" id="phPopupModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>💧 Water pH Fine-Tuning Dial</h3>
+        <button class="modal-close-btn" aria-label="Close">&times;</button>
+      </div>
+
+      <div class="ph-popup-modal-content">
+        <!-- Giant pH Dial -->
+        <div class="ph-gauge-big" id="popupPhGauge">
+          <div class="ph-big-number" id="popupPhBigVal">7.5</div>
+          <div class="ph-big-label">pH Level</div>
+        </div>
+
+        <!-- Precision Steppers -->
+        <div style="display:flex; justify-content:center; align-items:center; gap:1.5rem;">
+          <button class="btn btn-secondary" id="popupPhMinus" style="font-size:1.2rem; padding:0.6rem 1.4rem;">- 0.1</button>
+          <span style="font-size:0.85rem; color:var(--text-muted);">0.1 Increment Stepper</span>
+          <button class="btn btn-secondary" id="popupPhPlus" style="font-size:1.2rem; padding:0.6rem 1.4rem;">+ 0.1</button>
+        </div>
+
+        <!-- 4.0 - 9.0 Range Slider -->
+        <div class="param-slider-wrapper">
+          <input type="range" id="popupPhSlider" class="custom-range-slider" min="4.0" max="9.0" step="0.1" value="7.5">
+          <div class="ph-spectrum-bar"></div>
+          <div class="slider-ticks-labels">
+            <span>4.0 Acid</span>
+            <span>6.5</span>
+            <span>7.0 Neutral</span>
+            <span>8.0</span>
+            <span>9.0 Alkaline</span>
+          </div>
+        </div>
+
+        <!-- Presets -->
+        <div class="preset-chips-list" style="justify-content:center;">
+          <span class="preset-chip" data-ph-preset="5.0">5.0 (Acid Danger)</span>
+          <span class="preset-chip" data-ph-preset="6.5">6.5 (Minimum)</span>
+          <span class="preset-chip" data-ph-preset="7.0">7.0 (Neutral)</span>
+          <span class="preset-chip active-preset" data-ph-preset="7.5">7.5 (Optimal Pond)</span>
+          <span class="preset-chip" data-ph-preset="8.2">8.2 (Shrimp/Sea)</span>
+          <span class="preset-chip" data-ph-preset="9.0">9.0 (Alkaline Danger)</span>
+        </div>
+
+        <!-- Ecological Feedback -->
+        <div class="eco-status-box status-optimal" id="popupPhEcoInfo">
+          <!-- Filled dynamically -->
+        </div>
+
+        <button class="btn btn-primary btn-lg" style="margin-top:0.5rem;" onclick="window.app.closeAllModals()">
+          ✓ Apply pH & Return
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL 2: STAMPED GEOTAGGED PHOTO PREVIEW & SAVE
+       ========================================================================= -->
+  <div class="modal-backdrop" id="previewPhotoModal">
+    <div class="modal-card" style="max-width: 680px;">
+      <div class="modal-header">
+        <h3>📸 Geotagged Watermarked Photo</h3>
+        <button class="modal-close-btn" aria-label="Close">&times;</button>
+      </div>
+
+      <div class="preview-modal-body">
+        <div class="stamped-image-container">
+          <img id="stampedPreviewImg" src="" alt="Stamped Geotagged Fishery Survey Photo">
+        </div>
+
+        <div class="preview-meta-summary" id="previewSummaryText">
+          <!-- Populated dynamically -->
+        </div>
+
+        <div class="preview-actions">
+          <button class="btn btn-secondary" id="downloadStampedBtn">
+            📥 Download Photo
+          </button>
+          <button class="btn btn-primary btn-lg" id="saveSurveyBtn">
+            💾 Save Survey Record
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL 3: SURVEY RECORD DETAIL MODAL
+       ========================================================================= -->
+  <div class="modal-backdrop" id="surveyDetailModal">
+    <div class="modal-card" style="max-width: 640px;">
+      <div class="modal-header">
+        <h3>📋 Survey Station Details</h3>
+        <button class="modal-close-btn" aria-label="Close">&times;</button>
+      </div>
+      <div id="surveyDetailModalBody">
+        <!-- Populated dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL 4: INSTITUTE & SURVEY SETTINGS
+       ========================================================================= -->
+  <div class="modal-backdrop" id="settingsModal">
+    <div class="modal-card" style="max-width: 580px;">
+      <div class="modal-header">
+        <h3>⚙️ Institutional Profile & Survey Settings</h3>
+        <button class="modal-close-btn" aria-label="Close">&times;</button>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:1rem;">
+        <div class="form-group">
+          <label class="form-label" for="profileInstituteInput">🏛️ Institute / University / Organization Name:</label>
+          <input type="text" id="profileInstituteInput" class="form-input" placeholder="e.g. ICAR Research Complex for NEH Region">
+          <small style="color:var(--text-muted); font-size:0.75rem;">This will be stamped on all watermarked photos and export reports.</small>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="profileDeptInput">🔬 Department / Division:</label>
+          <input type="text" id="profileDeptInput" class="form-input" placeholder="e.g. Division of Fisheries & Aquatic Health">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="profileProjectInput">📋 Project / Survey Campaign Title:</label>
+          <input type="text" id="profileProjectInput" class="form-input" placeholder="e.g. National Inland Water Quality Monitoring">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="profileSurveyorInput">👤 Default Surveyor Name:</label>
+          <input type="text" id="profileSurveyorInput" class="form-input" placeholder="e.g. Field Officer">
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:0.75rem;">
+          <button class="btn btn-secondary" onclick="window.app.closeAllModals()">Cancel</button>
+          <button class="btn btn-primary" id="saveProfileBtn">💾 Save Profile</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL 5: ABOUT DEVELOPERS & INSTITUTIONAL ACKNOWLEDGEMENTS
+       ========================================================================= -->
+  <div class="modal-backdrop" id="aboutModal">
+    <div class="modal-card" style="max-width: 640px;">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:0.75rem;">
+          <div class="icar-header-logo-frame">
+            <img src="assets/icar_logo.png" alt="ICAR Logo" class="icar-logo-img">
+          </div>
+          <div>
+            <h3 style="font-size:1.15rem;">About Developers & Acknowledgements</h3>
+            <div style="font-size:0.75rem; color:var(--accent-cyan); font-weight:600;">ICAR Research Complex for NEH Region</div>
+          </div>
+        </div>
+        <button class="modal-close-btn" aria-label="Close">&times;</button>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:1.2rem;">
+        
+        <!-- App Scope Card -->
+        <div style="background:rgba(4,10,20,0.5); padding:0.9rem 1.1rem; border-radius:var(--radius-md); border:1px solid var(--border-glass);">
+          <h4 style="color:#ffffff; font-size:0.95rem; margin-bottom:0.25rem;">🌊 AquaSurvey Pro v2.0</h4>
+          <p style="font-size:0.82rem; color:var(--text-muted); line-height:1.45;">
+            An integrated scientific field application for real-time geotagged photo watermarking, precision water quality parameter analysis (pH 4.0–9.0, Dissolved Oxygen, Salinity, Temperature), fish stock monitoring, and offline GIS mapping.
+          </p>
+        </div>
+
+        <!-- Developers List -->
+        <div>
+          <h4 style="font-size:0.9rem; color:var(--accent-teal); display:flex; align-items:center; gap:0.4rem;">
+            👨‍🔬 Application Developers & Scientific Team:
+          </h4>
+          <div class="dev-credits-grid">
+            <div class="dev-member-card">
+              <div class="dev-avatar">DS</div>
+              <div>
+                <div class="dev-name">Dr. Huidrom Dayananda Singh</div>
+                <div class="dev-role">Scientist & Developer</div>
+              </div>
+            </div>
+
+            <div class="dev-member-card">
+              <div class="dev-avatar">GS</div>
+              <div>
+                <div class="dev-name">Dr. Sadokpam Gojendro Singh</div>
+                <div class="dev-role">Scientist & Developer</div>
+              </div>
+            </div>
+
+            <div class="dev-member-card">
+              <div class="dev-avatar">JS</div>
+              <div>
+                <div class="dev-name">Dr. Hijam Jiten Singh</div>
+                <div class="dev-role">Scientist & Developer</div>
+              </div>
+            </div>
+
+            <div class="dev-member-card">
+              <div class="dev-avatar">AL</div>
+              <div>
+                <div class="dev-name">Dr. Angom Lenin</div>
+                <div class="dev-role">Scientist & Developer</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sincere Acknowledgements Box -->
+        <div class="acknowledgement-box">
+          <div class="acknowledgement-title">
+            <span>🙏</span> Sincere Acknowledgement
+          </div>
+          <div class="acknowledgement-quote">
+            "The developers want to sincerely thank the <strong>Director, ICAR Research Complex for NEH Region</strong>, for his continuous encouragement, visionary guidance, and invaluable support in developing this Application for fishery field surveys and aquatic health monitoring."
+          </div>
+          <div class="acknowledgement-signoff">
+            — Dr. H. Dayananda Singh, Dr. S. Gojendro Singh, Dr. H. Jiten Singh & Dr. A. Lenin
+          </div>
+        </div>
+
+        <!-- Institute Info Footer -->
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.76rem; color:var(--text-dim); border-top:1px solid var(--border-glass); padding-top:0.75rem;">
+          <span>🏛️ ICAR Research Complex for NEH Region</span>
+          <button class="btn btn-primary btn-sm" onclick="window.app.closeAllModals()">Close</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Leaflet JS for Maps -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <!-- Application Scripts -->
+  <script src="js/geolocation.js"></script>
+  <script src="js/camera.js"></script>
+  <script src="js/watermark.js"></script>
+  <script src="js/parameters.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/export.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
